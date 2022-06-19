@@ -7,28 +7,26 @@ import (
 )
 
 type ErrorResponse struct {
-	Err        error  `json:"-"`
-	StatusCode int    `json:"-"`
-	StatusText string `json:"status_text"`
-	Message    string `json:"message"`
+	Err     error  `json:"-"`
+	Status  int    `json:"status"`
+	Message string `json:"message"`
 }
 
 var (
-	ErrBadRequest = &ErrorResponse{StatusCode: 400, Message: "Bad request."}
-	ErrNotFound   = &ErrorResponse{StatusCode: 404, Message: "Resource not found."}
-	ErrNotAllowed = &ErrorResponse{StatusCode: 405, Message: "Not allowed."}
+	ErrBadRequest = &ErrorResponse{Status: 400, Message: "Bad request."}
+	ErrNotFound   = &ErrorResponse{Status: 404, Message: "Resource not found."}
+	ErrNotAllowed = &ErrorResponse{Status: 405, Message: "Not allowed."}
 )
 
 func (er *ErrorResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	render.Status(r, er.StatusCode)
+	render.Status(r, er.Status)
 	return nil
 }
 
 func ErrorRenderer(err error) *ErrorResponse {
 	return &ErrorResponse{
-		Err:        err,
-		StatusCode: 400,
-		StatusText: "Bad request",
-		Message:    err.Error(),
+		Err:     err,
+		Status:  400,
+		Message: err.Error(),
 	}
 }
