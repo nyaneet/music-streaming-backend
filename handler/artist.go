@@ -13,25 +13,29 @@ import (
 
 var artistIdKey = "artistId"
 
+var artistUrlParams = map[string]string{
+	"artistIdKey": "artistId",
+}
+
 func artists(router chi.Router) {
 	router.Get("/", getArtists)
 	router.Route("/{id}", func(router chi.Router) {
-		router.Use(ArtistCtx)
+		router.Use(artistCtx)
 		router.Get("/", getArtist)
 	})
 }
 
-func ArtistCtx(next http.Handler) http.Handler {
+func artistCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		artistId := chi.URLParam(req, "id")
 		if artistId == "" {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Id is required")))
+			render.Render(w, req, ErrorRenderer(fmt.Errorf("Id is required.")))
 			return
 		}
 
 		id, err := strconv.Atoi(artistId)
 		if err != nil {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid Id")))
+			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid Id.")))
 			return
 		}
 
@@ -53,8 +57,8 @@ func getArtist(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = render.Render(w, req, &artist)
-	if err != nil {
+	if err := render.Render(w, req, &artist); err != nil {
+		render.Render(w, req, ErrInternalServerError)
 		return
 	}
 }
@@ -62,11 +66,12 @@ func getArtist(w http.ResponseWriter, req *http.Request) {
 func getArtists(w http.ResponseWriter, req *http.Request) {
 	artists, err := dbInstance.GetAllArtists()
 	if err != nil {
+		render.Render(w, req, ErrInternalServerError)
 		return
 	}
 
-	err = render.Render(w, req, artists)
-	if err != nil {
+	if err := render.Render(w, req, artists); err != nil {
 		render.Render(w, req, ErrorRenderer(err))
+		return
 	}
 }

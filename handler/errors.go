@@ -13,13 +13,15 @@ type ErrorResponse struct {
 }
 
 var (
-	ErrBadRequest = &ErrorResponse{Status: 400, Message: "Bad request."}
-	ErrNotFound   = &ErrorResponse{Status: 404, Message: "Resource not found."}
-	ErrNotAllowed = &ErrorResponse{Status: 405, Message: "Not allowed."}
+	ErrBadRequest          = &ErrorResponse{Status: 400, Message: "Bad request."}
+	ErrUnauthorized        = &ErrorResponse{Status: 401, Message: "Unauthorized."}
+	ErrNotFound            = &ErrorResponse{Status: 404, Message: "Resource not found."}
+	ErrNotAllowed          = &ErrorResponse{Status: 405, Message: "Not allowed."}
+	ErrInternalServerError = &ErrorResponse{Status: 500, Message: "Internal Server Error."}
 )
 
-func (er *ErrorResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	render.Status(r, er.Status)
+func (er *ErrorResponse) Render(w http.ResponseWriter, req *http.Request) error {
+	render.Status(req, er.Status)
 	return nil
 }
 

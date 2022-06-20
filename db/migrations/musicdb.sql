@@ -54,6 +54,19 @@ CREATE TYPE public.album_type AS ENUM (
 
 ALTER TYPE public.album_type OWNER TO postgres;
 
+--
+-- Name: user_type; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.user_type AS ENUM (
+    'COMMON',
+    'ARTIST',
+    'ADMIN'
+);
+
+
+ALTER TYPE public.user_type OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -290,6 +303,9 @@ CREATE TABLE public.users (
     email text NOT NULL,
     country character(2) NOT NULL,
     date timestamp without time zone NOT NULL,
+    type public.user_type NOT NULL,
+    banned boolean NOT NULL,
+    artist_id bigint,
     CONSTRAINT country_check CHECK (((country)::text ~* '^[a-zA-Z]+$'::text)),
     CONSTRAINT email_check CHECK ((email ~* '^[a-zA-Z0-9._-]+@[A-Za-z0-9.-]+[.][a-zA-Z]+$'::text)),
     CONSTRAINT nickname_check CHECK (((nickname ~* '^[a-zA-Z0-9._-]+$'::text) AND (length(nickname) >= 5))),
@@ -2517,26 +2533,26 @@ COPY public.songs (song_id, title, explicit, duration) FROM stdin;
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.users (user_id, nickname, password, email, country, date) FROM stdin;
-1	neeekit	user12345	neeekit@outlook.com	ru	2021-11-05 22:10:00
-2	unicorn666	rainbow999	unicorn666@gmail.com	us	2021-11-06 10:10:00
-3	minyewoo	GfUld6a	umenyanetimeniumenyanetfamilii@gmail.com	ru	2021-11-06 15:10:00
-4	hexsixzeros	h1j2k3l4jK	hexsixzeros@gmail.com	ru	2021-11-06 15:10:20
-5	quadratonero	f4hjg5JG	quadratonero000@gmail.com	ru	2021-11-06 15:12:00
-7	TinyFox	g3hj4GGg5	tiny4x@gmail.com	de	2021-11-07 15:12:00
-8	grumpyCat	ICat10xspluS	catt@mail.ru	ru	2021-11-08 06:00:00
-9	NorMan	D2nhk2D	norman222@gmail.com	jp	2021-11-08 06:12:00
-10	selfishdragon	Drr22dfG	drakkk@gmail.com	dk	2021-11-08 06:30:00
-11	Polennylt	GH6fghjf	Polennylt@gmail.com	ru	2021-11-08 07:00:00
-12	Viaze	G67JH6433	Viaze@gmail.com	us	2021-11-08 07:15:00
-13	Telonnar	ghj6FG53D	Telonnar@gmail.com	us	2021-11-08 07:30:00
-14	Dinelli	56JHGf7FgF	Dinelli@gmail.com	us	2021-11-08 07:30:00
-15	Hanane	yiy678FG	Hanane@gmail.com	ru	2021-11-08 08:30:00
-16	Bonnaneae	dd6655FG	Bonnaneae@gmail.com	jp	2021-11-08 09:30:00
-17	Dfives	kjGk7sDF	Dfives@gmail.com	jp	2021-11-08 10:30:00
-18	Tarrilame1234	DGFkdjd	Tarrilame777@gmail.com	dk	2021-11-08 11:30:00
-19	Faoraned	7ghFGFD46	Faoraned@gmail.com	ru	2021-11-08 12:30:00
-20	Likonid	fh5647FgFF	Likonid@gmail.com	ru	2021-11-08 14:30:00
+COPY public.users (user_id, nickname, password, email, country, date, type, banned, artist_id) FROM stdin;
+1	neeekit	user12345	neeekit@outlook.com	ru	2021-11-05 22:10:00	COMMON	f	\N
+2	unicorn666	rainbow999	unicorn666@gmail.com	us	2021-11-06 10:10:00	COMMON	f	\N
+3	minyewoo	GfUld6a	umenyanetimeniumenyanetfamilii@gmail.com	ru	2021-11-06 15:10:00	COMMON	f	\N
+4	hexsixzeros	h1j2k3l4jK	hexsixzeros@gmail.com	ru	2021-11-06 15:10:20	COMMON	f	\N
+5	quadratonero	f4hjg5JG	quadratonero000@gmail.com	ru	2021-11-06 15:12:00	COMMON	f	\N
+7	TinyFox	g3hj4GGg5	tiny4x@gmail.com	de	2021-11-07 15:12:00	COMMON	f	\N
+8	grumpyCat	ICat10xspluS	catt@mail.ru	ru	2021-11-08 06:00:00	COMMON	f	\N
+9	NorMan	D2nhk2D	norman222@gmail.com	jp	2021-11-08 06:12:00	COMMON	f	\N
+10	selfishdragon	Drr22dfG	drakkk@gmail.com	dk	2021-11-08 06:30:00	COMMON	f	\N
+11	Polennylt	GH6fghjf	Polennylt@gmail.com	ru	2021-11-08 07:00:00	COMMON	f	\N
+12	Viaze	G67JH6433	Viaze@gmail.com	us	2021-11-08 07:15:00	COMMON	f	\N
+13	Telonnar	ghj6FG53D	Telonnar@gmail.com	us	2021-11-08 07:30:00	COMMON	f	\N
+14	Dinelli	56JHGf7FgF	Dinelli@gmail.com	us	2021-11-08 07:30:00	COMMON	f	\N
+15	Hanane	yiy678FG	Hanane@gmail.com	ru	2021-11-08 08:30:00	COMMON	f	\N
+16	Bonnaneae	dd6655FG	Bonnaneae@gmail.com	jp	2021-11-08 09:30:00	COMMON	f	\N
+17	Dfives	kjGk7sDF	Dfives@gmail.com	jp	2021-11-08 10:30:00	COMMON	f	\N
+18	Tarrilame1234	DGFkdjd	Tarrilame777@gmail.com	dk	2021-11-08 11:30:00	COMMON	f	\N
+19	Faoraned	7ghFGFD46	Faoraned@gmail.com	ru	2021-11-08 12:30:00	COMMON	f	\N
+20	Likonid	fh5647FgFF	Likonid@gmail.com	ru	2021-11-08 14:30:00	ARTIST	f	1
 \.
 
 
@@ -2865,6 +2881,13 @@ ALTER TABLE ONLY public.albums_songs
 
 ALTER TABLE ONLY public.albums
     ADD CONSTRAINT fk_artists_albums FOREIGN KEY (artist_id) REFERENCES public.artists(artist_id);
+
+--
+-- Name: albums fk_users_artists; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT fk_users_artists FOREIGN KEY (artist_id) REFERENCES public.artists(artist_id);
 
 
 -- Completed on 2021-12-17 18:44:45

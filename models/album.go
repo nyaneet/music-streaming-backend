@@ -12,12 +12,12 @@ type Album struct {
 	Year   int    `json: "year"`
 }
 
-type AlbumList struct {
-	Albums []Album `json:"albums"`
-}
-
 func (*Album) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
+}
+
+type AlbumList struct {
+	Albums []Album `json:"albums"`
 }
 
 func (*AlbumList) Render(w http.ResponseWriter, req *http.Request) error {

@@ -3,27 +3,21 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	_ "github.com/lib/pq"
 )
 
-const (
-	HOST = "localhost"
-	PORT = 5432
-)
-
-var ErrNoMatch = fmt.Errorf("no matching record")
+var ErrNoMatch = fmt.Errorf("No matching record.")
 
 type Database struct {
 	Conn *sql.DB
 }
 
-func Initialize(username, password, database string) (Database, error) {
+func Initialize(host, username, password, database string, port int) (Database, error) {
 	db := Database{}
 
 	dbSource := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		HOST, PORT, username, password, database)
+		host, port, username, password, database)
 	conn, err := sql.Open("postgres", dbSource)
 	if err != nil {
 		return db, err
@@ -35,6 +29,5 @@ func Initialize(username, password, database string) (Database, error) {
 		return db, err
 	}
 
-	log.Println("Connected to database.")
 	return db, nil
 }

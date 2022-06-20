@@ -16,22 +16,22 @@ var albumIdKey = "albumId"
 func albums(router chi.Router) {
 	router.Get("/", getAlbums)
 	router.Route("/{id}", func(router chi.Router) {
-		router.Use(AlbumCtx)
+		router.Use(albumCtx)
 		router.Get("/", getAlbum)
 	})
 }
 
-func AlbumCtx(next http.Handler) http.Handler {
+func albumCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		albumId := chi.URLParam(req, "id")
 		if albumId == "" {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Id is required")))
+			render.Render(w, req, ErrorRenderer(fmt.Errorf("Id is required.")))
 			return
 		}
 
 		id, err := strconv.Atoi(albumId)
 		if err != nil {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid Id")))
+			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid Id.")))
 			return
 		}
 
@@ -53,8 +53,8 @@ func getAlbum(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = render.Render(w, req, &album)
-	if err != nil {
+	if err := render.Render(w, req, &album); err != nil {
+		render.Render(w, req, ErrInternalServerError)
 		return
 	}
 }
@@ -62,11 +62,12 @@ func getAlbum(w http.ResponseWriter, req *http.Request) {
 func getAlbums(w http.ResponseWriter, req *http.Request) {
 	albums, err := dbInstance.GetAllAlbums()
 	if err != nil {
+		render.Render(w, req, ErrInternalServerError)
 		return
 	}
 
-	err = render.Render(w, req, albums)
-	if err != nil {
+	if err := render.Render(w, req, albums); err != nil {
 		render.Render(w, req, ErrorRenderer(err))
+		return
 	}
 }

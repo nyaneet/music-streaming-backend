@@ -12,12 +12,12 @@ type Track struct {
 	Duration int    `json: "duration"`
 }
 
-type TrackList struct {
-	Tracks []Track `json: "tracks"`
-}
-
 func (*Track) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
+}
+
+type TrackList struct {
+	Tracks []Track `json: "tracks"`
 }
 
 func (*TrackList) Render(w http.ResponseWriter, req *http.Request) error {

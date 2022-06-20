@@ -8,17 +8,36 @@ import (
 
 func (db Database) GetAllAlbums() (*models.AlbumList, error) {
 	albums := &models.AlbumList{}
-	empty := ""
 
-	rows, err := db.Conn.Query("SELECT * FROM albums ORDER BY album_id DESC;")
+	query := `SELECT
+				al.album_id AS album_id,
+				al.name AS album_name,
+				al.type AS album_type,
+				al.year AS album_year,
+				ar.artist_id AS artist_id,
+				ar.name AS artist_name,
+				ar.description AS artist_description
+			FROM
+				albums AS al
+				JOIN artists ar ON al.artist_id = ar.artist_id
+			ORDER BY album_id DESC;`
+	rows, err := db.Conn.Query(query)
 	if err != nil {
 		return albums, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var album models.Album
-		err := rows.Scan(&album.Id, &album.Name, &empty, &album.Type, &album.Year, &empty)
+		album := models.Album{}
+		err := rows.Scan(
+			&album.Id,
+			&album.Name,
+			&album.Type,
+			&album.Year,
+			&album.Artist.Id,
+			&album.Artist.Name,
+			&album.Artist.Description,
+		)
 		if err != nil {
 			return albums, err
 		}
@@ -30,14 +49,36 @@ func (db Database) GetAllAlbums() (*models.AlbumList, error) {
 
 func (db Database) GetAlbumById(artistId int) (models.Album, error) {
 	album := models.Album{}
-	empty := ""
 
-	query := `SELECT * FROM albums WHERE album_id = $1;`
+	query := `SELECT
+			    al.album_id AS album_id,
+			    al.name AS album_name,
+			    al.type AS album_type,
+			    al.year AS album_year,
+			    ar.artist_id AS artist_id,
+			    ar.name AS artist_name,
+			    ar.description AS artist_description
+			FROM
+			    albums AS al
+			    JOIN artists ar ON al.artist_id = ar.artist_id
+			WHERE
+			    al.album_id = $1;`
 	row := db.Conn.QueryRow(query, artistId)
-	switch err := row.Scan(&album.Id, &album.Name, &empty, &album.Type, &album.Year, &empty); err {
-	case sql.ErrNoRows:
-		return album, ErrNoMatch
-	default:
+
+	if err := row.Scan(
+		&album.Id,
+		&album.Name,
+		&album.Type,
+		&album.Year,
+		&album.Artist.Id,
+		&album.Artist.Name,
+		&album.Artist.Description,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return album, ErrNoMatch
+		}
 		return album, err
 	}
+
+	return album, nil
 }

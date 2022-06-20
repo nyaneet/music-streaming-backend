@@ -13,6 +13,7 @@ func (db Database) GetAllArtists() (*models.ArtistList, error) {
 	if err != nil {
 		return artists, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var artist models.Artist
@@ -31,10 +32,13 @@ func (db Database) GetArtistById(artistId int) (models.Artist, error) {
 
 	query := `SELECT * FROM artists WHERE artist_id = $1;`
 	row := db.Conn.QueryRow(query, artistId)
-	switch err := row.Scan(&artist.Id, &artist.Name, &artist.Description); err {
-	case sql.ErrNoRows:
-		return artist, ErrNoMatch
-	default:
+
+	if err := row.Scan(&artist.Id, &artist.Name, &artist.Description); err != nil {
+		if err == sql.ErrNoRows {
+			return artist, ErrNoMatch
+		}
 		return artist, err
 	}
+
+	return artist, nil
 }

@@ -11,24 +11,25 @@ import (
 var dbInstance db.Database
 
 func NewHandler(db db.Database) http.Handler {
-	router := chi.NewRouter()
 	dbInstance = db
-	router.MethodNotAllowed(notAllowedHandler)
-	router.NotFound(notFoundHandler)
-	router.Route("/tracks", tracks)
-	router.Route("/artists", artists)
-	router.Route("/albums", albums)
-	return router
-}
+	router := chi.NewRouter()
 
-func notAllowedHandler(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(405)
-	render.Render(w, req, ErrNotAllowed)
+	router.NotFound(notFoundHandler)
+
+	router.Route("/auth", auth)
+	router.Route("/tracks", tracks)
+	router.Route("/albums", albums)
+	router.Route("/artists", artists)
+
+	router.Route("/users", func(router chi.Router) {
+		router.Use(isAdmin)
+		router.Route("/", users)
+	})
+
+	return router
 }
 
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(400)
 	render.Render(w, req, ErrNotFound)
 }

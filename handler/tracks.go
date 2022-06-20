@@ -16,22 +16,22 @@ var trackIdKey = "trackId"
 func tracks(router chi.Router) {
 	router.Get("/", getTracks)
 	router.Route("/{id}", func(router chi.Router) {
-		router.Use(TrackCtx)
+		router.Use(trackCtx)
 		router.Get("/", getTrack)
 	})
 }
 
-func TrackCtx(next http.Handler) http.Handler {
+func trackCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		trackId := chi.URLParam(req, "id")
 		if trackId == "" {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Track Id is required")))
+			render.Render(w, req, ErrorRenderer(fmt.Errorf("Track Id is required.")))
 			return
 		}
 
 		id, err := strconv.Atoi(trackId)
 		if err != nil {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid track Id")))
+			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid track Id.")))
 			return
 		}
 
@@ -53,8 +53,8 @@ func getTrack(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = render.Render(w, req, &track)
-	if err != nil {
+	if err := render.Render(w, req, &track); err != nil {
+		render.Render(w, req, ErrInternalServerError)
 		return
 	}
 }
@@ -62,11 +62,12 @@ func getTrack(w http.ResponseWriter, req *http.Request) {
 func getTracks(w http.ResponseWriter, req *http.Request) {
 	tracks, err := dbInstance.GetAllTracks()
 	if err != nil {
+		render.Render(w, req, ErrInternalServerError)
 		return
 	}
 
-	err = render.Render(w, req, tracks)
-	if err != nil {
+	if err := render.Render(w, req, tracks); err != nil {
 		render.Render(w, req, ErrorRenderer(err))
+		return
 	}
 }

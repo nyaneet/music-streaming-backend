@@ -73,6 +73,45 @@ WHERE
     ar.name = 'Normandie'
     AND a.name = 'White Flag';
 
+
+--- Get track
+
+SELECT
+    s.song_id as song_id,
+    s.title as title,
+    s.explicit AS explicit,
+    s.duration AS duration,
+    al.album_id AS album_id,
+    al.name AS album_name,
+    al.type AS album_type,
+    al.year AS album_year,
+    ar.artist_id AS artist_id,
+    ar.name AS artist_name,
+    ar.description AS artist_description
+FROM
+    songs AS s
+    JOIN albums_songs als ON s.song_id = als.song_id
+    JOIN albums al ON al.album_id = als.album_id
+    JOIN artists ar ON al.artist_id = ar.artist_id
+WHERE
+    s.song_id = 1;
+
+--- Get album
+
+SELECT
+    al.album_id AS album_id,
+    al.name AS album_name,
+    al.type AS album_type,
+    al.year AS album_year,
+    ar.artist_id AS artist_id,
+    ar.name AS artist_name,
+    ar.description AS artist_description
+FROM
+    albums AS al
+    JOIN artists ar ON al.artist_id = ar.artist_id
+WHERE
+    s.song_id = 1;
+
 --- 2
 
 SELECT
