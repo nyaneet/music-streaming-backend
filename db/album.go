@@ -9,18 +9,19 @@ import (
 func (db Database) GetAllAlbums() (*models.AlbumList, error) {
 	albums := &models.AlbumList{}
 
-	query := `SELECT
-				al.album_id AS album_id,
-				al.name AS album_name,
-				al.type AS album_type,
-				al.year AS album_year,
-				ar.artist_id AS artist_id,
-				ar.name AS artist_name,
-				ar.description AS artist_description
-			FROM
-				albums AS al
-				JOIN artists ar ON al.artist_id = ar.artist_id
-			ORDER BY album_id DESC;`
+	query := `
+	SELECT
+		al.album_id AS album_id,
+		al.name AS album_name,
+		al.type AS album_type,
+		al.year AS album_year,
+		ar.artist_id AS artist_id,
+		ar.name AS artist_name,
+		ar.description AS artist_description
+	FROM
+		albums AS al
+		JOIN artists ar ON al.artist_id = ar.artist_id
+	ORDER BY album_id DESC;`
 	rows, err := db.Conn.Query(query)
 	if err != nil {
 		return albums, err
@@ -50,19 +51,20 @@ func (db Database) GetAllAlbums() (*models.AlbumList, error) {
 func (db Database) GetAlbumById(artistId int) (models.Album, error) {
 	album := models.Album{}
 
-	query := `SELECT
-			    al.album_id AS album_id,
-			    al.name AS album_name,
-			    al.type AS album_type,
-			    al.year AS album_year,
-			    ar.artist_id AS artist_id,
-			    ar.name AS artist_name,
-			    ar.description AS artist_description
-			FROM
-			    albums AS al
-			    JOIN artists ar ON al.artist_id = ar.artist_id
-			WHERE
-			    al.album_id = $1;`
+	query := `
+	SELECT
+		al.album_id AS album_id,
+		al.name AS album_name,
+		al.type AS album_type,
+		al.year AS album_year,
+		ar.artist_id AS artist_id,
+		ar.name AS artist_name,
+		ar.description AS artist_description
+	FROM
+		albums AS al
+		JOIN artists ar ON al.artist_id = ar.artist_id
+	WHERE
+		al.album_id = $1;`
 	row := db.Conn.QueryRow(query, artistId)
 
 	if err := row.Scan(

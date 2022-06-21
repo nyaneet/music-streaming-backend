@@ -5,11 +5,11 @@ import (
 )
 
 type Album struct {
-	Id     int    `json: "id"`
-	Name   string `json: "name"`
-	Artist Artist `json: "artist"`
-	Type   string `json: "type"`
-	Year   int    `json: "year"`
+	Id     int    `json:"id"`
+	Name   string `json:"name"`
+	Artist Artist `json:"artist"`
+	Type   string `json:"type"`
+	Year   int    `json:"year"`
 }
 
 func (*Album) Render(w http.ResponseWriter, req *http.Request) error {

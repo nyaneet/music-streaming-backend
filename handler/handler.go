@@ -21,6 +21,11 @@ func NewHandler(db db.Database) http.Handler {
 	router.Route("/albums", albums)
 	router.Route("/artists", artists)
 
+	router.Route("/me", func(router chi.Router) {
+		router.Use(isAuthorized)
+		router.Route("/", me)
+	})
+
 	router.Route("/users", func(router chi.Router) {
 		router.Use(isAdmin)
 		router.Route("/", users)

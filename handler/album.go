@@ -1,10 +1,7 @@
 package handler
 
 import (
-	"context"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -16,32 +13,13 @@ var albumIdKey = "albumId"
 func albums(router chi.Router) {
 	router.Get("/", getAlbums)
 	router.Route("/{id}", func(router chi.Router) {
-		router.Use(albumCtx)
+		router.Use(extractId)
 		router.Get("/", getAlbum)
 	})
 }
 
-func albumCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		albumId := chi.URLParam(req, "id")
-		if albumId == "" {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Id is required.")))
-			return
-		}
-
-		id, err := strconv.Atoi(albumId)
-		if err != nil {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid Id.")))
-			return
-		}
-
-		ctx := context.WithValue(req.Context(), albumIdKey, id)
-		next.ServeHTTP(w, req.WithContext(ctx))
-	})
-}
-
 func getAlbum(w http.ResponseWriter, req *http.Request) {
-	albumId := req.Context().Value(albumIdKey).(int)
+	albumId := req.Context().Value("id").(int)
 
 	album, err := dbInstance.GetAlbumById(albumId)
 	if err != nil {

@@ -15,14 +15,14 @@ var JWTKey = []byte(os.Getenv("JWT_SECRET_KEY"))
 
 type Claims struct {
 	jwt.StandardClaims
-	Username string `json: "username"`
-	Role     string `json: "role"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
 }
 
 type Credentials struct {
-	Username string `json: "username"`
-	Email    string `json: "email"`
-	Password string `json: "password"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func (c *Credentials) Bind(req *http.Request) error {
@@ -40,16 +40,16 @@ func (c *Credentials) Render(req *http.Request) error {
 }
 
 type Payload struct {
-	Token    string `json: "token"`
-	Username string `json: "username"`
-	Email    string `json: "email"`
-	Role     string `json: "role"`
+	Token    string `json:"token"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
 }
 
 func (p *Payload) Bind(req *http.Request) error {
 	return nil
 }
 
-func (t *Payload) Render(w http.ResponseWriter, req *http.Request) error {
+func (p *Payload) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }

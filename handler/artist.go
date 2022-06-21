@@ -1,10 +1,7 @@
 package handler
 
 import (
-	"context"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -20,32 +17,13 @@ var artistUrlParams = map[string]string{
 func artists(router chi.Router) {
 	router.Get("/", getArtists)
 	router.Route("/{id}", func(router chi.Router) {
-		router.Use(artistCtx)
+		router.Use(extractId)
 		router.Get("/", getArtist)
 	})
 }
 
-func artistCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		artistId := chi.URLParam(req, "id")
-		if artistId == "" {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Id is required.")))
-			return
-		}
-
-		id, err := strconv.Atoi(artistId)
-		if err != nil {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid Id.")))
-			return
-		}
-
-		ctx := context.WithValue(req.Context(), artistIdKey, id)
-		next.ServeHTTP(w, req.WithContext(ctx))
-	})
-}
-
 func getArtist(w http.ResponseWriter, req *http.Request) {
-	artistId := req.Context().Value(artistIdKey).(int)
+	artistId := req.Context().Value("id").(int)
 
 	artist, err := dbInstance.GetArtistById(artistId)
 	if err != nil {

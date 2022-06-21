@@ -6,9 +6,9 @@ import (
 )
 
 type Artist struct {
-	Id          int            `json: "id"`
-	Name        string         `json: "name"`
-	Description sql.NullString `json: "description"`
+	Id          int            `json:"id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
 }
 
 func (*Artist) Render(w http.ResponseWriter, req *http.Request) error {
@@ -16,7 +16,7 @@ func (*Artist) Render(w http.ResponseWriter, req *http.Request) error {
 }
 
 type ArtistList struct {
-	Artists []Artist `json: "artists"`
+	Artists []Artist `json:"artists"`
 }
 
 func (*ArtistList) Render(w http.ResponseWriter, req *http.Request) error {

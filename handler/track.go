@@ -1,10 +1,7 @@
 package handler
 
 import (
-	"context"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -16,32 +13,13 @@ var trackIdKey = "trackId"
 func tracks(router chi.Router) {
 	router.Get("/", getTracks)
 	router.Route("/{id}", func(router chi.Router) {
-		router.Use(trackCtx)
+		router.Use(extractId)
 		router.Get("/", getTrack)
 	})
 }
 
-func trackCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		trackId := chi.URLParam(req, "id")
-		if trackId == "" {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Track Id is required.")))
-			return
-		}
-
-		id, err := strconv.Atoi(trackId)
-		if err != nil {
-			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid track Id.")))
-			return
-		}
-
-		ctx := context.WithValue(req.Context(), trackIdKey, id)
-		next.ServeHTTP(w, req.WithContext(ctx))
-	})
-}
-
 func getTrack(w http.ResponseWriter, req *http.Request) {
-	trackId := req.Context().Value(trackIdKey).(int)
+	trackId := req.Context().Value("id").(int)
 
 	track, err := dbInstance.GetTrackById(trackId)
 	if err != nil {

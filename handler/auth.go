@@ -1,9 +1,7 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -16,67 +14,6 @@ import (
 func auth(router chi.Router) {
 	router.Post("/sign_in", signIn)
 	router.Post("/sign_up", signUp)
-}
-
-func extractTokenWithClaims(req *http.Request) (*jwt.Token, *jwtauth.Claims, error) {
-	token := &jwt.Token{}
-	claims := &jwtauth.Claims{}
-
-	bearer := req.Header.Get("Authorization")
-	if len(bearer) <= 7 || strings.ToUpper(bearer[0:6]) != "BEARER" {
-		return token, claims, fmt.Errorf("Invalid token.")
-	}
-
-	token, err := jwt.ParseWithClaims(bearer[7:], claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtauth.JWTKey, nil
-	})
-	return token, claims, err
-}
-
-func isAuthorized(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		token, _, err := extractTokenWithClaims(req)
-		if err != nil || !token.Valid {
-			render.Render(w, req, ErrUnauthorized)
-			return
-		}
-
-		next.ServeHTTP(w, req)
-	})
-}
-
-func isArtist(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		token, claims, err := extractTokenWithClaims(req)
-		if err != nil || !token.Valid {
-			render.Render(w, req, ErrUnauthorized)
-			return
-		}
-
-		if claims.Role != "ARTIST" {
-			render.Render(w, req, ErrNotAllowed)
-			return
-		}
-
-		next.ServeHTTP(w, req)
-	})
-}
-
-func isAdmin(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		token, claims, err := extractTokenWithClaims(req)
-		if err != nil || !token.Valid {
-			render.Render(w, req, ErrUnauthorized)
-			return
-		}
-
-		if claims.Role != "ADMIN" {
-			render.Render(w, req, ErrNotAllowed)
-			return
-		}
-
-		next.ServeHTTP(w, req)
-	})
 }
 
 func signIn(w http.ResponseWriter, req *http.Request) {

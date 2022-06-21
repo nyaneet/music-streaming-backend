@@ -8,17 +8,18 @@ import (
 
 func (db Database) GetAllUsers() (*models.UserList, error) {
 	users := &models.UserList{}
-	query := `SELECT
-                user_id,
-                nickname,
-                password,
-                email,
-                type,
-                banned,
-                artist_id
-            FROM
-			    users
-			ORDER BY user_id DESC;`
+	query := `
+	SELECT
+		user_id,
+		nickname,
+		password,
+		email,
+		type,
+		banned,
+		artist_id
+	FROM
+		users
+	ORDER BY user_id DESC;`
 	rows, err := db.Conn.Query(query)
 	if err != nil {
 		return users, err
@@ -48,18 +49,19 @@ func (db Database) GetAllUsers() (*models.UserList, error) {
 func (db Database) GetUserById(userId int) (models.User, error) {
 	user := models.User{}
 
-	query := `SELECT
-                user_id,
-                nickname,
-                password,
-                email,
-                type,
-                banned,
-                artist_id
-            FROM
-			    users
-			WHERE
-			    user_id = $1;`
+	query := `
+	SELECT
+		user_id,
+		nickname,
+		password,
+		email,
+		type,
+		banned,
+		artist_id
+	FROM
+		users
+	WHERE
+		user_id = $1;`
 	row := db.Conn.QueryRow(query, userId)
 
 	if err := row.Scan(
@@ -83,18 +85,19 @@ func (db Database) GetUserById(userId int) (models.User, error) {
 func (db Database) GetUserByName(userName string) (models.User, error) {
 	user := models.User{}
 
-	query := `SELECT
-                user_id,
-                nickname,
-                password,
-                email,
-                type,
-                banned,
-                artist_id
-            FROM
-			    users
-			WHERE
-			    nickname = $1;`
+	query := `
+	SELECT
+		user_id,
+		nickname,
+		password,
+		email,
+		type,
+		banned,
+		artist_id
+	FROM
+		users
+	WHERE
+		nickname = $1;`
 	row := db.Conn.QueryRow(query, userName)
 
 	if err := row.Scan(
