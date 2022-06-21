@@ -166,8 +166,7 @@ ALTER SEQUENCE public.albums_album_id_seq OWNED BY public.albums.album_id;
 CREATE TABLE public.albums_songs (
     album_id integer NOT NULL,
     song_id integer NOT NULL,
-    track_number smallint NOT NULL,
-    CONSTRAINT track_number_check CHECK ((track_number > 0))
+    track_number smallint
 );
 
 

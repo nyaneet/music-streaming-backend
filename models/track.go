@@ -12,7 +12,11 @@ type Track struct {
 	Duration int    `json:"duration"`
 }
 
-func (*Track) Render(w http.ResponseWriter, req *http.Request) error {
+func (t *Track) Render(w http.ResponseWriter, req *http.Request) error {
+	return nil
+}
+
+func (t *Track) Bind(req *http.Request) error {
 	return nil
 }
 
@@ -20,6 +24,6 @@ type TrackList struct {
 	Tracks []Track `json:"tracks"`
 }
 
-func (*TrackList) Render(w http.ResponseWriter, req *http.Request) error {
+func (t *TrackList) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }

@@ -11,7 +11,7 @@ type Artist struct {
 	Description sql.NullString `json:"description"`
 }
 
-func (*Artist) Render(w http.ResponseWriter, req *http.Request) error {
+func (a *Artist) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
@@ -19,6 +19,6 @@ type ArtistList struct {
 	Artists []Artist `json:"artists"`
 }
 
-func (*ArtistList) Render(w http.ResponseWriter, req *http.Request) error {
+func (a *ArtistList) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }

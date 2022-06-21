@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -12,7 +13,27 @@ type Album struct {
 	Year   int    `json:"year"`
 }
 
-func (*Album) Render(w http.ResponseWriter, req *http.Request) error {
+func validateAlbumType(albumType string) error {
+	switch albumType {
+	case
+		"ALBUM",
+		"EP",
+		"SINGLE":
+		return nil
+	default:
+		return fmt.Errorf("Invalid album type.")
+	}
+}
+
+func (a *Album) Render(w http.ResponseWriter, req *http.Request) error {
+	return nil
+}
+
+func (a *Album) Bind(req *http.Request) error {
+	if err := validateAlbumType(a.Type); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -20,6 +41,6 @@ type AlbumList struct {
 	Albums []Album `json:"albums"`
 }
 
-func (*AlbumList) Render(w http.ResponseWriter, req *http.Request) error {
+func (a *AlbumList) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }

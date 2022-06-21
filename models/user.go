@@ -15,7 +15,7 @@ type User struct {
 	ArtistId sql.NullInt64 `json:"artist_id"`
 }
 
-func (*User) Render(w http.ResponseWriter, req *http.Request) error {
+func (u *User) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
@@ -23,6 +23,6 @@ type UserList struct {
 	Users []User `json:"users"`
 }
 
-func (*UserList) Render(w http.ResponseWriter, req *http.Request) error {
+func (u *UserList) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }

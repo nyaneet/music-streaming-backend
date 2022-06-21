@@ -22,7 +22,7 @@ func extractId(next http.Handler) http.Handler {
 		}
 
 		idValue, err := strconv.Atoi(id)
-		if err != nil || idValue < 0 {
+		if err != nil || idValue <= 0 {
 			render.Render(w, req, ErrorRenderer(fmt.Errorf("Invalid id.")))
 			return
 		}

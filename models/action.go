@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-var actionTypes = map[string]string{
+var ActionTypes = map[string]string{
 	"ADD_TRACK":            "ADD_SONG_TO_LIBRARY",
 	"REMOVE_TRACK":         "REMOVE_SONG_FROM_LIBRARY",
 	"PLAY_TRACK":           "LISTEN",
@@ -33,7 +33,7 @@ func (a *Action) Bind(req *http.Request) error {
 	if a.Type == "" {
 		return fmt.Errorf("Action type is required.")
 	}
-	actionType, ok := actionTypes[a.Type]
+	actionType, ok := ActionTypes[a.Type]
 	if !ok {
 		return fmt.Errorf("Invalid action type.")
 	}
@@ -55,7 +55,7 @@ type AddTrack struct {
 }
 
 func (a *AddTrack) Bind(req *http.Request) error {
-	a.Type = actionTypes["ADD_TRACK"]
+	a.Type = ActionTypes["ADD_TRACK"]
 
 	if err := validateSongId(a.SongId); err != nil {
 		return err
@@ -69,7 +69,7 @@ type RemoveTrack struct {
 }
 
 func (a *RemoveTrack) Bind(req *http.Request) error {
-	a.Type = actionTypes["REMOVE_TRACK"]
+	a.Type = ActionTypes["REMOVE_TRACK"]
 
 	if err := validateSongId(a.SongId); err != nil {
 		return err

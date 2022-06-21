@@ -7,7 +7,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var ErrNoMatch = fmt.Errorf("No matching record.")
+var (
+	ErrNoMatch    = fmt.Errorf("No matching record.")
+	ErrNotAllowed = fmt.Errorf("Resource not allowed.")
+)
 
 type Database struct {
 	Conn *sql.DB

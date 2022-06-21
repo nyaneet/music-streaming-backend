@@ -25,9 +25,9 @@ func getAlbum(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		if err == db.ErrNoMatch {
 			render.Render(w, req, ErrNotFound)
-		} else {
-			render.Render(w, req, ErrorRenderer(err))
+			return
 		}
+		render.Render(w, req, ErrInternalServerError)
 		return
 	}
 

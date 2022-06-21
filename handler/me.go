@@ -9,12 +9,10 @@ import (
 )
 
 func me(router chi.Router) {
-	// router.Route("/tracks", func(r chi.Router) {
 	router.Get("/tracks", getUserTracks)
 	router.Put("/tracks", addUserTrack)
 	router.Delete("/tracks", removeUserTrack)
 	router.Post("/tracks", addUserTrackMetadata)
-	// })
 }
 
 func getUserTracks(w http.ResponseWriter, req *http.Request) {
