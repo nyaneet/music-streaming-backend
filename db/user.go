@@ -10,13 +10,8 @@ func (db Database) GetAllUsers() (*models.UserList, error) {
 	users := &models.UserList{}
 	query := `
 	SELECT
-		user_id,
-		nickname,
-		password,
-		email,
-		type,
-		banned,
-		artist_id
+		user_id, nickname, password,
+		email, type, banned, artist_id
 	FROM
 		users
 	ORDER BY user_id DESC;`
@@ -29,12 +24,8 @@ func (db Database) GetAllUsers() (*models.UserList, error) {
 	for rows.Next() {
 		var user models.User
 		err := rows.Scan(
-			&user.Id,
-			&user.Username,
-			&user.Password,
-			&user.Email,
-			&user.Role,
-			&user.Banned,
+			&user.Id, &user.Username, &user.Password,
+			&user.Email, &user.Role, &user.Banned,
 			&user.ArtistId,
 		)
 		if err != nil {
@@ -51,13 +42,8 @@ func (db Database) GetUserById(userId int) (models.User, error) {
 
 	query := `
 	SELECT
-		user_id,
-		nickname,
-		password,
-		email,
-		type,
-		banned,
-		artist_id
+		user_id, nickname, password,
+		email, type, banned, artist_id
 	FROM
 		users
 	WHERE
@@ -65,12 +51,8 @@ func (db Database) GetUserById(userId int) (models.User, error) {
 	row := db.Conn.QueryRow(query, userId)
 
 	if err := row.Scan(
-		&user.Id,
-		&user.Username,
-		&user.Password,
-		&user.Email,
-		&user.Role,
-		&user.Banned,
+		&user.Id, &user.Username, &user.Password,
+		&user.Email, &user.Role, &user.Banned,
 		&user.ArtistId,
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -87,13 +69,8 @@ func (db Database) GetUserByName(userName string) (models.User, error) {
 
 	query := `
 	SELECT
-		user_id,
-		nickname,
-		password,
-		email,
-		type,
-		banned,
-		artist_id
+		user_id, nickname, password,
+		email, type, banned, artist_id
 	FROM
 		users
 	WHERE
@@ -101,12 +78,8 @@ func (db Database) GetUserByName(userName string) (models.User, error) {
 	row := db.Conn.QueryRow(query, userName)
 
 	if err := row.Scan(
-		&user.Id,
-		&user.Username,
-		&user.Password,
-		&user.Email,
-		&user.Role,
-		&user.Banned,
+		&user.Id, &user.Username, &user.Password,
+		&user.Email, &user.Role, &user.Banned,
 		&user.ArtistId,
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -125,28 +98,43 @@ func (db Database) AddUser(data models.RegistrationData) error {
 		artistId int
 	)
 
-	query = `
-	INSERT INTO artists
-		(name, description)
-	VALUES 
-		($1, $2)
-	RETURNING
-		artist_id;`
+	// making transaction and defer a rollback in case anything fails
+	tx, err := db.Conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	if data.Role == "ARTIST" {
-		if err := db.Conn.QueryRow(query, data.ArtistName, data.ArtistDescription).Scan(&artistId); err != nil {
+		query = `
+		INSERT INTO artists
+			(name, description)
+		VALUES 
+			($1, $2)
+		RETURNING
+			artist_id;`
+		if err := tx.QueryRow(query, data.ArtistName, data.ArtistDescription).Scan(&artistId); err != nil {
 			return err
 		}
 	}
 
 	query = `
 	INSERT INTO users
-		(nickname, password, email, country, date, type, banned)
+		(nickname, password, email, country, date, type, banned, artist_id)
 	VALUES 
-		($1, $2, $3, 'ru', NOW(), $4, FALSE)
+		($1, $2, $3, 'ru', NOW(), $4, FALSE, $5)
 	RETURNING
 		user_id;`
-	if err := db.Conn.QueryRow(query, data.Username, data.Password, data.Email, data.Role).Scan(&userId); err != nil {
-		db.Conn.QueryRow(`DELETE FROM artists WHERE artist_id = $1;`, artistId)
+	validArtistId := map[bool]interface{}{true: artistId, false: nil}
+	if err := tx.QueryRow(
+		query, data.Username, data.Password,
+		data.Email, data.Role, validArtistId[artistId != 0],
+	).Scan(&userId); err != nil {
+		return err
+	}
+
+	// commit transaction
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 

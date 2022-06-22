@@ -36,17 +36,10 @@ func (db Database) GetAllTracks() (*models.TrackList, error) {
 	for rows.Next() {
 		var track models.Track
 		err := rows.Scan(
-			&track.Id,
-			&track.Name,
-			&track.Explicit,
-			&track.Duration,
-			&track.Album.Id,
-			&track.Album.Name,
-			&track.Album.Type,
-			&track.Album.Year,
-			&track.Album.Artist.Id,
-			&track.Album.Artist.Name,
-			&track.Album.Artist.Description,
+			&track.Id, &track.Name, &track.Explicit,
+			&track.Duration, &track.Album.Id, &track.Album.Name,
+			&track.Album.Type, &track.Album.Year, &track.Album.Artist.Id,
+			&track.Album.Artist.Name, &track.Album.Artist.Description,
 		)
 		if err != nil {
 			return tracks, err
@@ -83,17 +76,10 @@ func (db Database) GetTrackById(trackId int) (models.Track, error) {
 	row := db.Conn.QueryRow(query, trackId)
 
 	if err := row.Scan(
-		&track.Id,
-		&track.Name,
-		&track.Explicit,
-		&track.Duration,
-		&track.Album.Id,
-		&track.Album.Name,
-		&track.Album.Type,
-		&track.Album.Year,
-		&track.Album.Artist.Id,
-		&track.Album.Artist.Name,
-		&track.Album.Artist.Description,
+		&track.Id, &track.Name, &track.Explicit,
+		&track.Duration, &track.Album.Id, &track.Album.Name,
+		&track.Album.Type, &track.Album.Year, &track.Album.Artist.Id,
+		&track.Album.Artist.Name, &track.Album.Artist.Description,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return track, ErrNoMatch
@@ -149,17 +135,10 @@ func (db Database) GetAllUserTracks(username string) (*models.TrackList, error) 
 		var track = models.Track{}
 
 		err := rows.Scan(
-			&track.Id,
-			&track.Name,
-			&track.Explicit,
-			&track.Duration,
-			&track.Album.Id,
-			&track.Album.Name,
-			&track.Album.Type,
-			&track.Album.Year,
-			&track.Album.Artist.Id,
-			&track.Album.Artist.Name,
-			&track.Album.Artist.Description,
+			&track.Id, &track.Name, &track.Explicit,
+			&track.Duration, &track.Album.Id, &track.Album.Name,
+			&track.Album.Type, &track.Album.Year, &track.Album.Artist.Id,
+			&track.Album.Artist.Name, &track.Album.Artist.Description,
 		)
 		if err != nil {
 			return tracks, err
@@ -180,17 +159,16 @@ func (db Database) AddTrack(track models.Track, username string) error {
 		trackId  int
 	)
 
-	// check that albumId is correct
-	query = `
-	SELECT
-		user_id,
-		artist_id
-	FROM
-		users
-	WHERE
-		nickname = $1;`
+	// making transaction and defer a rollback in case anything fails
+	tx, err := db.Conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
-	row = db.Conn.QueryRow(query, username)
+	// check that albumId is correct
+	query = `SELECT user_id, artist_id FROM users WHERE nickname = $1;`
+	row = tx.QueryRow(query, username)
 	if err := row.Scan(&userId, &track.Album.Artist.Id); err != nil {
 		if err == sql.ErrNoRows {
 			return ErrNoMatch
@@ -198,15 +176,8 @@ func (db Database) AddTrack(track models.Track, username string) error {
 		return err
 	}
 
-	query = `
-	SELECT
-		artist_id
-	FROM
-		albums
-	WHERE
-		album_id = $1;`
-
-	row = db.Conn.QueryRow(query, track.Album.Id)
+	query = `SELECT artist_id FROM albums WHERE album_id = $1;`
+	row = tx.QueryRow(query, track.Album.Id)
 	if err := row.Scan(&artistId); err != nil {
 		if err == sql.ErrNoRows {
 			return ErrNoMatch
@@ -225,7 +196,7 @@ func (db Database) AddTrack(track models.Track, username string) error {
 		($1, $2, $3)
 	RETURNING
 		song_id;`
-	if err := db.Conn.QueryRow(query, track.Name, track.Explicit, track.Duration).Scan(&trackId); err != nil {
+	if err := tx.QueryRow(query, track.Name, track.Explicit, track.Duration).Scan(&trackId); err != nil {
 		return err
 	}
 
@@ -236,7 +207,12 @@ func (db Database) AddTrack(track models.Track, username string) error {
 		($1, $2)
 	RETURNING
 		song_id;`
-	if err := db.Conn.QueryRow(query, track.Album.Id, trackId).Scan(&trackId); err != nil {
+	if err := tx.QueryRow(query, track.Album.Id, trackId).Scan(&trackId); err != nil {
+		return err
+	}
+
+	// commit transaction
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 

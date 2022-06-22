@@ -9,7 +9,8 @@ import (
 func (db Database) GetAllArtists() (*models.ArtistList, error) {
 	artists := &models.ArtistList{}
 
-	rows, err := db.Conn.Query(`SELECT * FROM artists ORDER BY artist_id DESC;`)
+	query := `SELECT * FROM artists ORDER BY artist_id DESC;`
+	rows, err := db.Conn.Query(query)
 	if err != nil {
 		return artists, err
 	}
@@ -32,7 +33,6 @@ func (db Database) GetArtistById(artistId int) (models.Artist, error) {
 
 	query := `SELECT * FROM artists WHERE artist_id = $1;`
 	row := db.Conn.QueryRow(query, artistId)
-
 	if err := row.Scan(&artist.Id, &artist.Name, &artist.Description); err != nil {
 		if err == sql.ErrNoRows {
 			return artist, ErrNoMatch

@@ -31,12 +31,8 @@ func (db Database) GetAllAlbums() (*models.AlbumList, error) {
 	for rows.Next() {
 		album := models.Album{}
 		err := rows.Scan(
-			&album.Id,
-			&album.Name,
-			&album.Type,
-			&album.Year,
-			&album.Artist.Id,
-			&album.Artist.Name,
+			&album.Id, &album.Name, &album.Type,
+			&album.Year, &album.Artist.Id, &album.Artist.Name,
 			&album.Artist.Description,
 		)
 		if err != nil {
@@ -68,12 +64,8 @@ func (db Database) GetAlbumById(artistId int) (models.Album, error) {
 	row := db.Conn.QueryRow(query, artistId)
 
 	if err := row.Scan(
-		&album.Id,
-		&album.Name,
-		&album.Type,
-		&album.Year,
-		&album.Artist.Id,
-		&album.Artist.Name,
+		&album.Id, &album.Name, &album.Type,
+		&album.Year, &album.Artist.Id, &album.Artist.Name,
 		&album.Artist.Description,
 	); err != nil {
 		if err == sql.ErrNoRows {

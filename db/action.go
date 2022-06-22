@@ -8,14 +8,7 @@ func (db Database) AddTrackAction(username, actionType string, trackId int) erro
 		actionId int
 	)
 
-	query := `
-	SELECT
-		user_id
-	FROM
-		users
-	WHERE
-		nickname = $1;`
-
+	query := `SELECT user_id FROM users WHERE nickname = $1;`
 	row := db.Conn.QueryRow(query, username)
 	if err := row.Scan(&userId); err != nil {
 		if err == sql.ErrNoRows {
@@ -31,7 +24,10 @@ func (db Database) AddTrackAction(username, actionType string, trackId int) erro
 		(NOW(), $1, $2, $3)
 	RETURNING
 		action_id;`
-	if err := db.Conn.QueryRow(insertQuery, userId, actionType, trackId).Scan(&actionId); err != nil {
+	if err := db.Conn.QueryRow(
+		insertQuery, userId,
+		actionType, trackId,
+	).Scan(&actionId); err != nil {
 		return err
 	}
 

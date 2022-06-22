@@ -47,6 +47,14 @@ func extractTokenWithClaims(req *http.Request) (*jwt.Token, *jwtauth.Claims, err
 	return token, claims, err
 }
 
+func packAuthInfo(req *http.Request, claims *jwtauth.Claims) context.Context {
+	ctxValue := map[string]string{
+		"username": claims.Username,
+		"role":     claims.Role,
+	}
+	return context.WithValue(req.Context(), "auth", ctxValue)
+}
+
 func isAuthorized(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		token, claims, err := extractTokenWithClaims(req)
@@ -55,12 +63,7 @@ func isAuthorized(next http.Handler) http.Handler {
 			return
 		}
 
-		ctxValue := map[string]string{
-			"username": claims.Username,
-			"role":     claims.Role,
-		}
-
-		ctx := context.WithValue(req.Context(), "auth", ctxValue)
+		ctx := packAuthInfo(req, claims)
 		next.ServeHTTP(w, req.WithContext(ctx))
 	})
 }
@@ -78,12 +81,7 @@ func isArtist(next http.Handler) http.Handler {
 			return
 		}
 
-		ctxValue := map[string]string{
-			"username": claims.Username,
-			"role":     claims.Role,
-		}
-
-		ctx := context.WithValue(req.Context(), "auth", ctxValue)
+		ctx := packAuthInfo(req, claims)
 		next.ServeHTTP(w, req.WithContext(ctx))
 	})
 }
@@ -101,12 +99,7 @@ func isAdmin(next http.Handler) http.Handler {
 			return
 		}
 
-		ctxValue := map[string]string{
-			"username": claims.Username,
-			"role":     claims.Role,
-		}
-
-		ctx := context.WithValue(req.Context(), "auth", ctxValue)
+		ctx := packAuthInfo(req, claims)
 		next.ServeHTTP(w, req.WithContext(ctx))
 	})
 }
