@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -11,9 +12,15 @@ import (
 
 func mydiscography(router chi.Router) {
 	router.Put("/tracks", addArtistTrack)
-	router.Delete("/tracks", removeArtistTrack)
+	router.Route("/tracks/{id}", func(router chi.Router) {
+		router.Use(extractId)
+		router.Delete("/", removeArtistTrack)
+	})
 	router.Put("/albums", addArtistAlbum)
-	router.Delete("/albums", removeArtistAlbum)
+	router.Route("/albums/{id}", func(router chi.Router) {
+		router.Use(extractId)
+		router.Delete("/", removeArtistAlbum)
+	})
 }
 
 func addArtistTrack(w http.ResponseWriter, req *http.Request) {
@@ -41,7 +48,26 @@ func addArtistTrack(w http.ResponseWriter, req *http.Request) {
 }
 
 func removeArtistTrack(w http.ResponseWriter, req *http.Request) {
+	trackId := req.Context().Value("id").(int)
+	auth := req.Context().Value("auth").(map[string]string)
+	username, ok := auth["username"]
+	if !ok {
+		render.Render(w, req, ErrInternalServerError)
+		return
+	}
 
+	if err := dbInstance.RemoveTrack(trackId, username); err != nil {
+		if err == db.ErrNotAllowed {
+			render.Render(w, req, ErrNotAllowed)
+			return
+		}
+		if err == db.ErrNoMatch {
+			render.Render(w, req, ErrBadRequest)
+			return
+		}
+		render.Render(w, req, ErrInternalServerError)
+		return
+	}
 }
 
 func addArtistAlbum(w http.ResponseWriter, req *http.Request) {
@@ -65,5 +91,25 @@ func addArtistAlbum(w http.ResponseWriter, req *http.Request) {
 }
 
 func removeArtistAlbum(w http.ResponseWriter, req *http.Request) {
+	albumId := req.Context().Value("id").(int)
+	auth := req.Context().Value("auth").(map[string]string)
+	username, ok := auth["username"]
+	if !ok {
+		render.Render(w, req, ErrInternalServerError)
+		return
+	}
 
+	if err := dbInstance.RemoveAlbum(albumId, username); err != nil {
+		log.Println(err)
+		if err == db.ErrNotAllowed {
+			render.Render(w, req, ErrNotAllowed)
+			return
+		}
+		if err == db.ErrNoMatch {
+			render.Render(w, req, ErrBadRequest)
+			return
+		}
+		render.Render(w, req, ErrInternalServerError)
+		return
+	}
 }

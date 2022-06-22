@@ -166,7 +166,7 @@ func (db Database) AddTrack(track models.Track, username string) error {
 	}
 	defer tx.Rollback()
 
-	// check that albumId is correct
+	// check that username is correct
 	query = `SELECT user_id, artist_id FROM users WHERE nickname = $1;`
 	row = tx.QueryRow(query, username)
 	if err := row.Scan(&userId, &track.Album.Artist.Id); err != nil {
@@ -208,6 +208,79 @@ func (db Database) AddTrack(track models.Track, username string) error {
 	RETURNING
 		song_id;`
 	if err := tx.QueryRow(query, track.Album.Id, trackId).Scan(&trackId); err != nil {
+		return err
+	}
+
+	// commit transaction
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db Database) RemoveTrack(trackId int, username string) error {
+	var (
+		query           string
+		row             *sql.Row
+		userId          int
+		artistId        int
+		artistIdOfAlbum int
+		albumId         int
+	)
+
+	// making transaction and defer a rollback in case anything fails
+	tx, err := db.Conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// check that username is correct
+	query = `SELECT user_id, artist_id FROM users WHERE nickname = $1;`
+	row = tx.QueryRow(query, username)
+	if err := row.Scan(&userId, &artistId); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNoMatch
+		}
+		return err
+	}
+
+	query = `SELECT album_id FROM albums_songs WHERE song_id = $1;`
+	row = tx.QueryRow(query, trackId)
+	if err := row.Scan(&albumId); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNoMatch
+		}
+		return err
+	}
+
+	query = `SELECT artist_id FROM albums WHERE album_id = $1;`
+	row = tx.QueryRow(query, albumId)
+	if err := row.Scan(&artistIdOfAlbum); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNoMatch
+		}
+		return err
+	}
+
+	if artistId != artistIdOfAlbum {
+		return ErrNotAllowed
+	}
+
+	query = `DELETE FROM songs WHERE song_id = $1;`
+	if _, err := tx.Exec(query, trackId); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNoMatch
+		}
+		return err
+	}
+
+	query = `DELETE FROM albums_songs WHERE song_id = $1;`
+	if _, err := tx.Exec(query, trackId); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNoMatch
+		}
 		return err
 	}
 

@@ -146,6 +146,25 @@ WHERE
         AND a.date < a2.date )
 ORDER BY a.date DESC;
 
+--- Get all albums track
+
+SELECT
+    s.song_id as song_id,
+    s.title as title,
+    al.album_id AS album_id,
+    al.name AS album_name,
+    ar.artist_id AS artist_id,
+    ar.name AS artist_name		
+FROM
+    songs AS s
+    JOIN albums_songs als ON s.song_id = als.song_id
+    JOIN albums al ON al.album_id = als.album_id
+    JOIN artists ar ON al.artist_id = ar.artist_id
+WHERE
+    al.album_id = 5
+ORDER BY song_id DESC;
+
+
 --- 2
 
 SELECT
