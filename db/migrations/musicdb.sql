@@ -2581,7 +2581,7 @@ SELECT pg_catalog.setval('public.albums_album_id_seq', 103, true);
 -- Name: artists_artist_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.artists_artist_id_seq', 1, false);
+SELECT pg_catalog.setval('public.artists_artist_id_seq', 30, true);
 
 
 --

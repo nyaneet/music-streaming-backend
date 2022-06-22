@@ -117,3 +117,38 @@ func (db Database) GetUserByName(userName string) (models.User, error) {
 
 	return user, nil
 }
+
+func (db Database) AddUser(data models.RegistrationData) error {
+	var (
+		query    string
+		userId   int
+		artistId int
+	)
+
+	query = `
+	INSERT INTO artists
+		(name, description)
+	VALUES 
+		($1, $2)
+	RETURNING
+		artist_id;`
+	if data.Role == "ARTIST" {
+		if err := db.Conn.QueryRow(query, data.ArtistName, data.ArtistDescription).Scan(&artistId); err != nil {
+			return err
+		}
+	}
+
+	query = `
+	INSERT INTO users
+		(nickname, password, email, country, date, type, banned)
+	VALUES 
+		($1, $2, $3, 'ru', NOW(), $4, FALSE)
+	RETURNING
+		user_id;`
+	if err := db.Conn.QueryRow(query, data.Username, data.Password, data.Email, data.Role).Scan(&userId); err != nil {
+		db.Conn.QueryRow(`DELETE FROM artists WHERE artist_id = $1;`, artistId)
+		return err
+	}
+
+	return nil
+}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/nyaneet/music-streaming-backend/models"
 )
 
 const JWT_LIFETIME = 24 * time.Hour
@@ -52,4 +53,23 @@ func (p *Payload) Bind(req *http.Request) error {
 
 func (p *Payload) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
+}
+
+func GetToken(user models.User) (string, error) {
+	expirationTime := time.Now().Add(JWT_LIFETIME)
+	claims := &Claims{
+		Username: user.Username,
+		Role:     user.Role,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+		},
+	}
+
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := jwtToken.SignedString(JWTKey)
+	if err != nil {
+		return "", err
+	}
+
+	return token, err
 }
