@@ -27,3 +27,11 @@ type TrackList struct {
 func (t *TrackList) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
+
+type SearchQuery struct {
+	Query string `json:"query"`
+}
+
+func (sq *SearchQuery) Bind(req *http.Request) error {
+	return nil
+}

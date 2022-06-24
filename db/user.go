@@ -140,3 +140,72 @@ func (db Database) AddUser(data models.RegistrationData) error {
 
 	return nil
 }
+
+func (db Database) BanUser(username string) error {
+	var (
+		query  string
+		row    *sql.Row
+		banned bool
+		userId int
+	)
+
+	// making transaction and defer a rollback in case anything fails
+	tx, err := db.Conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// check that username is correct
+	query = `SELECT banned FROM users WHERE nickname = $1;`
+	row = tx.QueryRow(query, username)
+	if err := row.Scan(&banned); err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNoMatch
+		}
+		return err
+	}
+
+	query = `UPDATE users SET banned = $1 WHERE nickname = $2 RETURNING user_id;`
+	if err := tx.QueryRow(
+		query, !banned, username,
+	).Scan(&userId); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db Database) CheckBan(username string) (bool, error) {
+	var (
+		query  string
+		row    *sql.Row
+		banned bool
+	)
+
+	tx, err := db.Conn.Begin()
+	if err != nil {
+		return banned, err
+	}
+	defer tx.Rollback()
+
+	// check that username is correct
+	query = `SELECT banned FROM users WHERE nickname = $1;`
+	row = tx.QueryRow(query, username)
+	if err := row.Scan(&banned); err != nil {
+		if err == sql.ErrNoRows {
+			return banned, ErrNoMatch
+		}
+		return banned, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return banned, err
+	}
+
+	return banned, nil
+}

@@ -77,6 +77,58 @@ func (db Database) GetAlbumById(artistId int) (models.Album, error) {
 	return album, nil
 }
 
+func (db Database) GetAllArtistAlbums(username string) (*models.AlbumList, error) {
+	var (
+		artistId int
+		query    string
+	)
+	albums := &models.AlbumList{}
+
+	query = `SELECT artist_id FROM users WHERE nickname = $1;`
+	row := db.Conn.QueryRow(query, username)
+	if err := row.Scan(&artistId); err != nil {
+		if err == sql.ErrNoRows {
+			return albums, ErrNoMatch
+		}
+		return albums, err
+	}
+
+	query = `
+	SELECT
+		al.album_id AS album_id,
+		al.name AS album_name,
+		al.type AS album_type,
+		al.year AS album_year,
+		ar.artist_id AS artist_id,
+		ar.name AS artist_name,
+		ar.description AS artist_description
+	FROM
+		albums AS al
+		JOIN artists ar ON al.artist_id = ar.artist_id
+	WHERE
+		ar.artist_id = $1`
+	rows, err := db.Conn.Query(query, artistId)
+	if err != nil {
+		return albums, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		album := models.Album{}
+		err := rows.Scan(
+			&album.Id, &album.Name, &album.Type,
+			&album.Year, &album.Artist.Id, &album.Artist.Name,
+			&album.Artist.Description,
+		)
+		if err != nil {
+			return albums, err
+		}
+		albums.Albums = append(albums.Albums, album)
+	}
+
+	return albums, nil
+}
+
 func (db Database) AddAlbum(album models.Album, username string) error {
 	var (
 		query    string

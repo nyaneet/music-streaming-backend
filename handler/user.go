@@ -11,6 +11,7 @@ import (
 
 func users(router chi.Router) {
 	router.Get("/", getUsers)
+	router.Post("/ban", banUser)
 	router.Route("/{id}", func(router chi.Router) {
 		router.Use(extractId)
 		router.Get("/", getUser)
@@ -46,6 +47,27 @@ func getUsers(w http.ResponseWriter, req *http.Request) {
 
 	if err := render.Render(w, req, users); err != nil {
 		render.Render(w, req, ErrorRenderer(err))
+		return
+	}
+}
+
+type Ban struct {
+	Username string `json:"username"`
+}
+
+func (b *Ban) Bind(req *http.Request) error {
+	return nil
+}
+
+func banUser(w http.ResponseWriter, req *http.Request) {
+	ban := Ban{}
+	if err := render.Bind(req, &ban); err != nil {
+		render.Render(w, req, ErrorRenderer(err))
+		return
+	}
+
+	if err := dbInstance.BanUser(ban.Username); err != nil {
+		render.Render(w, req, ErrInternalServerError)
 		return
 	}
 }

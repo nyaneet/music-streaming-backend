@@ -8,6 +8,7 @@ import (
 	"github.com/nyaneet/music-streaming-backend/db"
 	jwtauth "github.com/nyaneet/music-streaming-backend/jwt-auth"
 	"github.com/nyaneet/music-streaming-backend/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func auth(router chi.Router) {
@@ -76,4 +77,16 @@ func signUp(w http.ResponseWriter, req *http.Request) {
 		Email:    data.Email,
 		Role:     data.Role,
 	})
+}
+
+func HashPassword(pass string) (string, error) {
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedBytes[:]), nil
+}
+
+func CompareHash(hash string, pass string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(pass))
 }

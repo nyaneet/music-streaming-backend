@@ -50,6 +50,54 @@ func (db Database) GetAllTracks() (*models.TrackList, error) {
 	return tracks, nil
 }
 
+func (db Database) FindTracks(searchQuery string) (*models.TrackList, error) {
+	tracks := &models.TrackList{}
+	query := `
+	SELECT
+		s.song_id as song_id,
+		s.title as title,
+		s.explicit AS explicit,
+		s.duration AS duration,
+		al.album_id AS album_id,
+		al.name AS album_name,
+		al.type AS album_type,
+		al.year AS album_year,
+		ar.artist_id AS artist_id,
+		ar.name AS artist_name,
+		ar.description AS artist_description
+	FROM
+		songs AS s
+		JOIN albums_songs als ON s.song_id = als.song_id
+		JOIN albums al ON al.album_id = als.album_id
+		JOIN artists ar ON al.artist_id = ar.artist_id
+	WHERE 
+		s.title ILIKE $1
+		OR al.name ILIKE $1
+		OR ar.name ILIKE $1
+	ORDER BY song_id DESC;`
+	rows, err := db.Conn.Query(query, "%"+searchQuery+"%")
+	if err != nil {
+		return tracks, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var track models.Track
+		err := rows.Scan(
+			&track.Id, &track.Name, &track.Explicit,
+			&track.Duration, &track.Album.Id, &track.Album.Name,
+			&track.Album.Type, &track.Album.Year, &track.Album.Artist.Id,
+			&track.Album.Artist.Name, &track.Album.Artist.Description,
+		)
+		if err != nil {
+			return tracks, err
+		}
+		tracks.Tracks = append(tracks.Tracks, track)
+	}
+
+	return tracks, nil
+}
+
 func (db Database) GetTrackById(trackId int) (models.Track, error) {
 	track := models.Track{}
 
@@ -126,6 +174,67 @@ func (db Database) GetAllUserTracks(username string) (*models.TrackList, error) 
 			AND a.date < a2.date )
 	ORDER BY a.date DESC;`
 	rows, err := db.Conn.Query(query, username)
+	if err != nil {
+		return tracks, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var track = models.Track{}
+
+		err := rows.Scan(
+			&track.Id, &track.Name, &track.Explicit,
+			&track.Duration, &track.Album.Id, &track.Album.Name,
+			&track.Album.Type, &track.Album.Year, &track.Album.Artist.Id,
+			&track.Album.Artist.Name, &track.Album.Artist.Description,
+		)
+		if err != nil {
+			return tracks, err
+		}
+
+		tracks.Tracks = append(tracks.Tracks, track)
+	}
+
+	return tracks, nil
+}
+
+func (db Database) GetAllArtistTracks(username string) (*models.TrackList, error) {
+	var (
+		artistId int
+		query    string
+	)
+	tracks := &models.TrackList{}
+
+	query = `SELECT artist_id FROM users WHERE nickname = $1;`
+	row := db.Conn.QueryRow(query, username)
+	if err := row.Scan(&artistId); err != nil {
+		if err == sql.ErrNoRows {
+			return tracks, ErrNoMatch
+		}
+		return tracks, err
+	}
+
+	query = `
+	SELECT
+		s.song_id as song_id,
+		s.title as title,
+		s.explicit AS explicit,
+		s.duration AS duration,
+		al.album_id AS album_id,
+		al.name AS album_name,
+		al.type AS album_type,
+		al.year AS album_year,
+		ar.artist_id AS artist_id,
+		ar.name AS artist_name,
+		ar.description AS artist_description
+	FROM
+		songs AS s
+		JOIN albums_songs als ON s.song_id = als.song_id
+		JOIN albums al ON al.album_id = als.album_id
+		JOIN artists ar ON al.artist_id = ar.artist_id
+	WHERE
+		ar.artist_id = $1;`
+	rows, err := db.Conn.Query(query, artistId)
 	if err != nil {
 		return tracks, err
 	}

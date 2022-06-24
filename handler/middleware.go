@@ -103,3 +103,26 @@ func isAdmin(next http.Handler) http.Handler {
 		next.ServeHTTP(w, req.WithContext(ctx))
 	})
 }
+
+func notBanned(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		token, claims, err := extractTokenWithClaims(req)
+		if err != nil || !token.Valid {
+			render.Render(w, req, ErrUnauthorized)
+			return
+		}
+
+		banned, err := dbInstance.CheckBan(claims.Username)
+		if err != nil {
+			render.Render(w, req, ErrInternalServerError)
+			return
+		}
+		if banned {
+			render.Render(w, req, ErrNotAllowed)
+			return
+		}
+
+		ctx := packAuthInfo(req, claims)
+		next.ServeHTTP(w, req.WithContext(ctx))
+	})
+}

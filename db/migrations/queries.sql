@@ -18,11 +18,31 @@ SELECT
     s.duration AS duration
 FROM songs AS s
 WHERE title ILIKE '%one%'
-AND CASE
-        WHEN FALSE = TRUE THEN explicit <> TRUE
-        ELSE TRUE
-    END
 ORDER BY title ASC;
+
+SELECT
+    s.song_id as song_id,
+    s.title as title,
+    s.explicit AS explicit,
+    s.duration AS duration,
+    al.album_id AS album_id,
+    al.name AS album_name,
+    al.type AS album_type,
+    al.year AS album_year,
+    ar.artist_id AS artist_id,
+    ar.name AS artist_name,
+    ar.description AS artist_description
+FROM
+    songs AS s
+    JOIN albums_songs als ON s.song_id = als.song_id
+    JOIN albums al ON al.album_id = als.album_id
+    JOIN artists ar ON al.artist_id = ar.artist_id
+WHERE 
+    s.title ILIKE '%Alone in%'
+    OR al.name ILIKE '%Alone in%'
+    OR ar.name ILIKE '%Alone in%'
+
+ORDER BY song_id DESC;
 
 --- 2.1 (2й вариант, PARENT_CONTORL = TRUE) (песни со значением explicit = true скрыты)
 
@@ -161,7 +181,7 @@ FROM
     JOIN albums al ON al.album_id = als.album_id
     JOIN artists ar ON al.artist_id = ar.artist_id
 WHERE
-    al.album_id = 5
+    al.id = 5
 ORDER BY song_id DESC;
 
 
@@ -315,5 +335,116 @@ WITH
             AND (a2.type = (enum_range(null::action_type))[3] OR a2.type = (enum_range(null::action_type))[1])
             AND a.date < a2.date )
     ORDER BY a.date DESC )
-    SELECT (COUNT(ful.user_id) + COUNT(sul.user_id) - COUNT(*))::real / COUNT(ful.user_id)::real AS first, (COUNT(ful.user_id) + COUNT(sul.user_id) - COUNT(*))::real / COUNT(sul.user_id)::real AS second
+    SELECT 
+        ((COUNT(ful.user_id) + COUNT(sul.user_id) - COUNT(*))::real / (1 + COUNT(ful.user_id))*100)::numeric::integer AS first,
+        ((COUNT(ful.user_id) + COUNT(sul.user_id) - COUNT(*))::real / (1 + COUNT(sul.user_id))*100)::numeric::integer AS second
     FROM first_user_library ful FULL OUTER JOIN second_user_library sul ON ful.song_id = sul.song_id;
+
+
+
+WITH
+    first_user_library AS (
+SELECT
+    DISTINCT ON (a.date, s.song_id)
+    s.title AS title,
+    s.song_id AS song_id,
+    1 AS user_id,
+    a.date::timestamp::date AS added
+FROM
+    actions a
+    RIGHT JOIN songs s ON a.song_id = s.song_id
+    JOIN users u ON a.user_id = u.user_id
+WHERE
+    u.nickname = 'grumpyCat'
+    AND a.type = (enum_range(null::action_type))[1]
+    AND NOT EXISTS (
+        SELECT 1
+        FROM actions a2
+        WHERE a.user_id = a2.user_id
+        AND a.song_id = a2.song_id
+        AND (a2.type = (enum_range(null::action_type))[3] OR a2.type = (enum_range(null::action_type))[1])
+        AND a.date < a2.date )
+ORDER BY a.date DESC ),
+    second_user_library AS (    
+SELECT
+    DISTINCT ON (a.date, s.song_id)
+    s.title AS title,
+    s.song_id AS song_id,
+    2 AS user_id,
+    a.date::timestamp::date AS added
+FROM
+    actions a
+    RIGHT JOIN songs s ON a.song_id = s.song_id
+    JOIN users u ON a.user_id = u.user_id
+WHERE
+    u.nickname = 'hexsixzeros'
+    AND a.type = (enum_range(null::action_type))[1]
+    AND NOT EXISTS (
+        SELECT 1
+        FROM actions a2
+        WHERE a.user_id = a2.user_id
+        AND a.song_id = a2.song_id
+        AND (a2.type = (enum_range(null::action_type))[3] OR a2.type = (enum_range(null::action_type))[1])
+        AND a.date < a2.date )
+ORDER BY a.date DESC ),
+    disliked AS(    
+SELECT
+        DISTINCT ON (a.date, s.song_id)
+        s.title AS title,
+        s.song_id AS song_id,
+        2 AS user_id,
+        a.date::timestamp::date AS added
+    FROM
+        actions a
+        RIGHT JOIN songs s ON a.song_id = s.song_id
+        JOIN users u ON a.user_id = u.user_id
+    WHERE
+        u.nickname = 'hexsixzeros'
+        AND a.type = (enum_range(null::action_type))[1]
+        AND NOT EXISTS (
+            SELECT 1
+            FROM actions a2
+            WHERE a.user_id = a2.user_id
+            AND a.song_id = a2.song_id
+            AND (a2.type = (enum_range(null::action_type))[3] OR a2.type = (enum_range(null::action_type))[1])
+            AND a.date < a2.date )
+        AND EXISTS (
+            SELECT 1
+            FROM actions a3
+            WHERE a3.user_id = 8
+            AND a.song_id = a3.song_id
+            AND a3.type = (enum_range(null::action_type))[11])
+    ORDER BY a.date DESC)
+SELECT 
+    ((COUNT(ful.user_id) + COUNT(sul.user_id) - COUNT(*))::real / (1 + COUNT(ful.user_id) + COUNT(d.user_id))*100)::numeric::integer AS similarity
+FROM first_user_library ful FULL OUTER JOIN second_user_library sul ON ful.song_id = sul.song_id FULL OUTER JOIN disliked d ON ful.song_id = d.song_id;
+
+
+
+SELECT
+        DISTINCT ON (a.date, s.song_id)
+        s.title AS title,
+        s.song_id AS song_id,
+        2 AS user_id,
+        a.date::timestamp::date AS added
+    FROM
+        actions a
+        RIGHT JOIN songs s ON a.song_id = s.song_id
+        JOIN users u ON a.user_id = u.user_id
+    WHERE
+        u.user_id = 63
+        AND a.type = (enum_range(null::action_type))[1]
+        AND NOT EXISTS (
+            SELECT 1
+            FROM actions a2
+            WHERE a.user_id = a2.user_id
+            AND a.song_id = a2.song_id
+            AND (a2.type = (enum_range(null::action_type))[3] OR a2.type = (enum_range(null::action_type))[1])
+            AND a.date < a2.date )
+        AND EXISTS (
+            SELECT 1
+            FROM actions a3
+            WHERE a3.user_id = 8
+            AND a.song_id = a3.song_id
+            AND a3.type = (enum_range(null::action_type))[11])
+    ORDER BY a.date DESC;

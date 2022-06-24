@@ -10,8 +10,7 @@ import (
 
 var dbInstance db.Database
 
-func NewHandler(db db.Database) http.Handler {
-	dbInstance = db
+func VersionRouter() http.Handler {
 	router := chi.NewRouter()
 
 	router.NotFound(notFoundHandler)
@@ -22,11 +21,13 @@ func NewHandler(db db.Database) http.Handler {
 	router.Route("/artists", artists)
 
 	router.Route("/me", func(router chi.Router) {
+		router.Use(notBanned)
 		router.Use(isAuthorized)
 		router.Route("/", me)
 	})
 
 	router.Route("/mydiscography", func(router chi.Router) {
+		router.Use(notBanned)
 		router.Use(isArtist)
 		router.Route("/", mydiscography)
 	})
@@ -35,6 +36,15 @@ func NewHandler(db db.Database) http.Handler {
 		router.Use(isAdmin)
 		router.Route("/", users)
 	})
+
+	return router
+}
+
+func NewHandler(db db.Database) http.Handler {
+	dbInstance = db
+
+	router := chi.NewRouter()
+	router.Mount("/api/v1/", VersionRouter())
 
 	return router
 }

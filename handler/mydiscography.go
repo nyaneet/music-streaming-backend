@@ -21,6 +21,8 @@ func mydiscography(router chi.Router) {
 		router.Use(extractId)
 		router.Delete("/", removeArtistAlbum)
 	})
+	router.Get("/tracks", getArtistTracks)
+	router.Get("/albums", getArtistAlbums)
 }
 
 func addArtistTrack(w http.ResponseWriter, req *http.Request) {
@@ -110,6 +112,48 @@ func removeArtistAlbum(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		render.Render(w, req, ErrInternalServerError)
+		return
+	}
+}
+
+func getArtistTracks(w http.ResponseWriter, req *http.Request) {
+	auth := req.Context().Value("auth").(map[string]string)
+	username, ok := auth["username"]
+	if !ok {
+		render.Render(w, req, ErrInternalServerError)
+		return
+	}
+
+	tracks, err := dbInstance.GetAllArtistTracks(username)
+	if err != nil {
+		render.Render(w, req, ErrInternalServerError)
+		return
+	}
+
+	if err := render.Render(w, req, tracks); err != nil {
+		render.Render(w, req, ErrorRenderer(err))
+		return
+	}
+}
+
+func getArtistAlbums(w http.ResponseWriter, req *http.Request) {
+	auth := req.Context().Value("auth").(map[string]string)
+	username, ok := auth["username"]
+	if !ok {
+		render.Render(w, req, ErrInternalServerError)
+		return
+	}
+
+	albums, err := dbInstance.GetAllArtistAlbums(username)
+	if err != nil {
+		log.Println(err.Error())
+		render.Render(w, req, ErrInternalServerError)
+		return
+	}
+
+	if err := render.Render(w, req, albums); err != nil {
+		log.Println(err.Error())
+		render.Render(w, req, ErrorRenderer(err))
 		return
 	}
 }
